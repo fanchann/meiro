@@ -614,7 +614,7 @@ func (a *app) setVolume(v float64) {
 	if a.volume > 0 {
 		a.muted = a.volume
 	}
-	a.player.SetVolume(playbackVolume(a.volume, a.loudness, a.loudnessOK && a.settings.NormalizeLoudness))
+	a.player.SetVolume(playbackVolume(a.volume, a.loudness, a.loudnessOK && a.settings.NormalizeLoudness, a.settings.LogVolume))
 	a.settings.Volume = a.volume
 	a.syncSystemMedia()
 }

@@ -58,7 +58,7 @@ var settingsRows = []settingsRow{
 
 	{key: "h-look", heading: "Appearance and sound"},
 	{key: "appearance", search: "theme appearance system light dark colour color colours colors violet indigo blue sky teal green lime amber orange red rose orchid hue palette tonal spot vibrant expressive neutral monochrome artwork dynamic", card: (*app).appearanceCard},
-	{key: "sound", search: "sound audio normalize loudness equaliser volume", card: (*app).soundCard},
+	{key: "sound", search: "sound audio normalize loudness logarithmic equaliser volume", card: (*app).soundCard},
 
 	{key: "h-playback", heading: "Playback"},
 	{key: "crossfade", search: "crossfade fade transition gap between tracks songs seconds", card: (*app).crossfadeCard},
@@ -351,6 +351,15 @@ func (a *app) soundCard(c *ui.Context) {
 			on := a.settings.NormalizeLoudness
 			if m3.Switch(c, &on, "Normalize loudness").Changed() {
 				a.setNormalizeLoudness(on)
+			}
+		})
+		ui.Row(c).Gap(16).AlignItems(ui.Center).Children(func() {
+			settingLabel(c, "Logarithmic volume", "Give the volume slider finer steps at low volumes.").Grow(1)
+			on := a.settings.LogVolume
+			if m3.Switch(c, &on, "Logarithmic volume").Changed() {
+				a.settings.LogVolume = on
+				a.saveSettings()
+				a.applyLoudness()
 			}
 		})
 		ui.Row(c).Gap(16).AlignItems(ui.Center).Children(func() {

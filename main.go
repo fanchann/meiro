@@ -97,6 +97,7 @@ func main() {
 		// Browsing decodes and drops pictures in bursts, and the runtime
 		// keeps the freed memory for a while before it gives it back.
 		a.every(30*time.Second, debug.FreeOSMemory)
+		a.watchSettings()
 		a.watchSession()
 		a.every(flushInterval, func() { a.update(a.flushScrobbles) })
 		a.desktop.win.OnClosed(a.stopTicking)
@@ -202,7 +203,7 @@ func (a *app) setup() {
 	}
 	a.cacheSongsText = strconv.Itoa(a.settings.CacheSongs)
 	a.volume = a.settings.Volume
-	a.player.SetVolume(a.volume / 100)
+	a.player.SetVolume(playbackVolume(a.volume, 0, false, a.settings.LogVolume))
 	a.loadEQ()
 	a.applyCrossfade()
 	a.openAudioCache()

@@ -50,7 +50,7 @@ func (a *app) streamAudio(item youtube.MusicItem, startAt time.Duration, changed
 	// the app's state now.
 	loudnessClient := a.loudnessClient(item.VideoID)
 	known, knownOK := a.loudnessMap.Get(item.VideoID)
-	volume, normalize := a.volume, a.settings.NormalizeLoudness
+	volume, normalize, logarithmic := a.volume, a.settings.NormalizeLoudness, a.settings.LogVolume
 	speed := a.speedFor(item)
 	streams := a.streams
 	local := a.downloaded(item.VideoID)
@@ -77,7 +77,7 @@ func (a *app) streamAudio(item youtube.MusicItem, startAt time.Duration, changed
 				fresh, freshOK = value, true
 			}
 		}
-		a.player.SetVolume(playbackVolume(volume, known.LoudnessDB, knownOK && normalize))
+		a.player.SetVolume(playbackVolume(volume, known.LoudnessDB, knownOK && normalize, logarithmic))
 		found, err := findAudio(ctx, streams, item, local, cache)
 		found.loudness, found.loudnessOK = fresh, freshOK
 		if err != nil || ctx.Err() != nil {

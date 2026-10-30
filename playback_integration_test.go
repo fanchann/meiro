@@ -360,16 +360,20 @@ func TestLoudnessGainAdjustsPlaybackVolumeWithoutChangingTheUserVolume(t *testin
 		volume    float64
 		loudness  float64
 		normalize bool
+		log       bool
 		want      float64
 	}{
-		{"disabled", 50, -11.7, false, 0.5},
-		{"quieter track", 50, -6, true, 0.9976311575},
-		{"loud track", 50, 6, true, 0.2505936168},
-		{"gain is capped", 90, -11.7, true, 1},
+		{"disabled", 50, -11.7, false, false, 0.5},
+		{"quieter track", 50, -6, true, false, 0.9976311575},
+		{"loud track", 50, 6, true, false, 0.2505936168},
+		{"gain is capped", 90, -11.7, true, false, 1},
+		{"logarithmic middle", 50, 0, false, true, 0.0306534300317},
+		{"logarithmic ends", 0, 0, false, true, 0},
+		{"logarithmic full", 100, 0, false, true, 1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := playbackVolume(tt.volume, tt.loudness, tt.normalize); math.Abs(got-tt.want) > 1e-9 {
+			if got := playbackVolume(tt.volume, tt.loudness, tt.normalize, tt.log); math.Abs(got-tt.want) > 1e-9 {
 				t.Fatalf("playbackVolume(%v, %v, %t) = %v, want %v", tt.volume, tt.loudness, tt.normalize, got, tt.want)
 			}
 		})
@@ -412,7 +416,7 @@ func TestLoudnessSurvivesTheStreamResolving(t *testing.T) {
 		body := `{"playerConfig":{"audioConfig":{"loudnessDb":6}}}`
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(body))}, nil
 	})}})}
-	want := playbackVolume(a.volume, 6, true)
+	want := playbackVolume(a.volume, 6, true, false)
 	a.play(tracks("song")[0], tracks("song"))
 	if !a.loudnessOK || math.Abs(a.player.Volume()-want) > 1e-9 {
 		t.Fatalf("first play: loudness known=%t, volume %v, want %v", a.loudnessOK, a.player.Volume(), want)
@@ -446,7 +450,7 @@ func TestLoudnessIsAppliedBeforeTheAudioStarts(t *testing.T) {
 		return urls.Get(ctx, videoID)
 	})
 	a.play(tracks("song")[0], tracks("song"))
-	want := playbackVolume(50, 6, true)
+	want := playbackVolume(50, 6, true, false)
 	if math.Abs(atResolve-want) > 1e-9 {
 		t.Fatalf("the player held volume %v when the stream was asked for, want %v", atResolve, want)
 	}
@@ -462,7 +466,7 @@ func TestNormalizationToggleImmediatelyUpdatesPlayerVolume(t *testing.T) {
 	a.loudnessMap.Put("song", youtube.Loudness{LoudnessDB: 6})
 	a.applyLoudness()
 	a.setNormalizeLoudness(true)
-	if got, want := a.player.Volume(), playbackVolume(50, 6, true); math.Abs(got-want) > 1e-9 {
+	if got, want := a.player.Volume(), playbackVolume(50, 6, true, false); math.Abs(got-want) > 1e-9 {
 		t.Fatalf("enabling normalization set volume to %v, want %v", got, want)
 	}
 	a.setNormalizeLoudness(false)
